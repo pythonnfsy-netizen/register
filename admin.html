@@ -3,143 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול מאובטח - מעיין שמחה</title>
+    <title>ניהול מתקדם - מעיין שמחה</title>
+    <!-- CSS & Frameworks -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
     <style>
-        body { background-color: #f4f7f6; font-family: system-ui, -apple-system, sans-serif; }
-        .admin-card { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .login-card { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-        .brand-header { color: #c71585; font-weight: bold; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .admin-card { max-width: 1200px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .brand-header { color: #c71585; font-weight: bold; display: flex; align-items: center; gap: 15px; }
+        .logo-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #c71585; }
         .table-brand { background-color: #c71585; color: white; }
+        .sibling-btn { cursor: pointer; color: #c71585; text-decoration: underline; font-weight: 500; }
         .btn-brand { background-color: #c71585; color: white; border: none; }
         .btn-brand:hover { background-color: #a0116b; color: white; }
-        .sibling-tag { background: #fce4ec; color: #c71585; padding: 3px 10px; border-radius: 50px; margin: 2px; display: inline-block; font-size: 0.85em; border: 1px solid #f8bbd0; }
+        
+        /* עיצוב להדפסה */
+        #pdf-template { display: none; padding: 40px; }
+        .pdf-header { border-bottom: 3px solid #c71585; padding-bottom: 20px; margin-bottom: 30px; }
     </style>
 </head>
 <body>
 
-<div id="loginSection" class="container" style="display: none;">
-    <div class="login-card text-center">
-        <h2 class="brand-header mb-4">כניסת מנהל</h2>
-        <div class="mb-3">
-            <input type="email" id="email" class="form-control form-control-lg" placeholder="אימייל">
-        </div>
-        <div class="mb-4">
-            <input type="password" id="password" class="form-control form-control-lg" placeholder="סיסמה">
-        </div>
-        <button onclick="login()" class="btn btn-brand btn-lg w-100 shadow-sm">התחבר למערכת</button>
-        <div id="loginError" class="text-danger mt-3 fw-bold"></div>
+<!-- מסך התחברות (נשאר כפי שהיה) -->
+<div id="loginSection" class="container pt-5">
+    <div class="card mx-auto shadow-sm p-4" style="max-width: 400px; border-radius: 15px;">
+        <h3 class="text-center brand-header justify-content-center mb-4">כניסת מנהל</h3>
+        <input type="email" id="email" class="form-control mb-2" placeholder="אימייל">
+        <input type="password" id="password" class="form-control mb-3" placeholder="סיסמה">
+        <button onclick="login()" class="btn btn-brand w-100">התחבר</button>
+        <div id="loginError" class="text-danger mt-2 text-center"></div>
     </div>
 </div>
 
+<!-- מסך ניהול ראשי -->
 <div id="adminContent" class="container-fluid" style="display: none;">
     <div class="admin-card">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="brand-header m-0">רשימת נרשמים - מעיין שמחה</h2>
-            <button onclick="logout()" class="btn btn-outline-secondary btn-sm">התנתק מהמערכת</button>
+            <div class="brand-header">
+                <img src="https://via.placeholder.com/50" class="logo-img" alt="לוגו"> <!-- תחליף בלינק ללוגו שלך -->
+                <h2 class="m-0">מערכת ניהול - מעיין שמחה</h2>
+            </div>
+            <button onclick="logout()" class="btn btn-sm btn-outline-secondary">התנתק</button>
         </div>
-        
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-brand">
-                    <tr>
-                        <th>תאריך רישום</th>
-                        <th>שם הסטודנט</th>
-                        <th>תעודת זהות</th>
-                        <th>אחים רשומים</th>
-                        <th class="text-center">פעולות</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsTable">
-                    </tbody>
-            </table>
+
+        <table class="table table-hover border">
+            <thead class="table-brand">
+                <tr>
+                    <th>שם תלמיד</th>
+                    <th>ת"ז</th>
+                    <th>אחים</th>
+                    <th>תשלומים</th>
+                    <th>פעולות</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- מודאל (פופ-אפ) אחים ותשלומים -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 15px;">
+            <div class="modal-header table-brand">
+                <h5 class="modal-title" id="modalTitle">פרטי משפחה</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- תוכן דינמי -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-brand" onclick="printCurrentStudent()">הדפס PDF</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- תבנית נסתרת להדפסת PDF -->
+<div id="pdf-template">
+    <div class="pdf-header text-center">
+        <h1 class="brand-header justify-content-center">מעיין שמחה - טופס רישום</h1>
+        <p>תאריך הפקה: <span id="pdf-date"></span></p>
+    </div>
+    <div id="pdf-content"></div>
+</div>
+
 <script>
+    // הגדרות Firebase (השתמש בשיטה שלך)
     const firebaseConfig = {
         apiKey: "AIzaSyBsWV2a4D_jLkT8CDkhuiMIF-iUeAdoxmE",
         authDomain: "registration-system-36ec5.firebaseapp.com",
         projectId: "registration-system-36ec5",
-        storageBucket: "registration-system-36ec5.firebasestorage.app",
-        messagingSenderId: "417197352828",
-        appId: "1:417197352828:web:173fc91810f9efc38226f9",
         databaseURL: "https://registration-system-36ec5-default-rtdb.europe-west1.firebasedatabase.app/"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // ניהול מצב התחברות
+    let currentStudentData = null; // לשמירת הנתון שנבחר להדפסה
+
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('adminContent').style.display = 'block';
             loadData();
-        } else {
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'none';
         }
     });
 
     function login() {
         const email = document.getElementById('email').value;
         const pass = document.getElementById('password').value;
-        const errorDiv = document.getElementById('loginError');
-        
-        auth.signInWithEmailAndPassword(email, pass).catch(err => {
-            errorDiv.innerText = "אופס! הפרטים לא נכונים.";
-        });
+        auth.signInWithEmailAndPassword(email, pass).catch(err => alert("שגיאה"));
     }
 
-    function logout() { auth.signOut(); }
+    function logout() { auth.signOut(); window.location.reload(); }
 
     function loadData() {
         db.ref('registrations').on('value', snap => {
-            const tableBody = document.getElementById('resultsTable');
-            tableBody.innerHTML = '';
+            const table = document.getElementById('resultsTable');
+            table.innerHTML = '';
             const data = snap.val();
-            
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    const entry = data[key];
-                    let siblingsHtml = '';
-                    
-                    if (entry.siblings && Array.isArray(entry.siblings)) {
-                        entry.siblings.forEach(s => {
-                            siblingsHtml += `<span class="sibling-tag">${s.name}</span>`;
-                        });
-                    }
+            if(!data) return;
 
-                    tableBody.innerHTML += `
-                        <tr>
-                            <td class="text-muted small">${entry.submissionTime || ''}</td>
-                            <td><strong>${entry.studentName}</strong></td>
-                            <td>${entry.studentID}</td>
-                            <td>${siblingsHtml || '<span class="text-muted">אין אחים</span>'}</td>
-                            <td class="text-center">
-                                <button class="btn btn-outline-danger btn-sm" onclick="deleteEntry('${key}')">מחיקה</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">אין נתונים במערכת</td></tr>';
-            }
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                const siblingsCount = item.siblings ? item.siblings.length : 0;
+                
+                table.innerHTML += `
+                    <tr>
+                        <td><strong>${item.studentName}</strong></td>
+                        <td>${item.studentID}</td>
+                        <td>
+                            <span class="sibling-btn" onclick="showSiblings('${key}')">
+                                הצג אחים (${siblingsCount})
+                            </span>
+                        </td>
+                        <td>
+                             <button class="btn btn-sm btn-light border" onclick="managePayments('${item.studentID}', '${item.studentName}')">💰 נהל תשלומים</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${key}')">מחיקה</button>
+                        </td>
+                    </tr>`;
+            });
         });
     }
 
-    function deleteEntry(key) {
-        if (confirm('בטוח שרוצה למחוק את הרישום?')) {
-            db.ref('registrations/' + key).remove();
+    // פופ-אפ אחים
+    function showSiblings(key) {
+        db.ref('registrations/' + key).once('value', snap => {
+            const item = snap.val();
+            currentStudentData = item;
+            let html = `<h4>אחים של ${item.studentName}:</h4><ul class="list-group">`;
+            if(item.siblings) {
+                item.siblings.forEach(s => {
+                    html += `<li class="list-group-item"><strong>${s.name}</strong> - ת"ז: ${s.id}</li>`;
+                });
+            } else { html += "<li>אין אחים רשומים</li>"; }
+            html += "</ul>";
+            
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('modalTitle').innerText = "פרטי אחים";
+            new bootstrap.Modal(document.getElementById('infoModal')).show();
+        });
+    }
+
+    // ניהול תשלומים (הזרקת נתונים לתיקייה נפרדת)
+    function managePayments(studentID, name) {
+        let amount = prompt(`הכנס סכום תשלום עבור ${name}:`);
+        if(amount) {
+            const payKey = db.ref('payments').push().key;
+            db.ref('payments/' + payKey).set({
+                studentID: studentID,
+                amount: amount,
+                date: new Date().toLocaleString('he-IL')
+            }).then(() => alert("התשלום נשמר בתיקיית payments!"));
         }
     }
-</script>
 
+    // הדפסה ל-PDF
+    function printCurrentStudent() {
+        if(!currentStudentData) return;
+        
+        const element = document.getElementById('pdf-template');
+        document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('he-IL');
+        let content = `<h3>פרטי סטודנט: ${currentStudentData.studentName}</h3>`;
+        content += `<p>תעודת זהות: ${currentStudentData.studentID}</p><hr>`;
+        content += `<h4>רשימת אחים:</h4>`;
+        (currentStudentData.siblings || []).forEach(s => {
+            content += `<p>• ${s.name} (ת"ז: ${s.id})</p>`;
+        });
+        
+        document.getElementById('pdf-content').innerHTML = content;
+        element.style.display = 'block';
+
+        const opt = {
+            margin: 1,
+            filename: `רישום_${currentStudentData.studentID}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.display = 'none';
+        });
+    }
+
+    function deleteItem(key) { if(confirm('למחוק?')) db.ref('registrations/'+key).remove(); }
+</script>
 </body>
 </html>
